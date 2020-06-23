@@ -52,13 +52,13 @@ public class MyPollProjectController {
 			entryPoll.setCreationDate((String) entry.get("creationDate"));
 
 			EntryPoll savedEntryPoll = this.entryPollRepository.save(entryPoll);
-			
+
 			this.saveEntryPoll(savedEntryPoll.getId(), i, poll);
 		}
-		
-		pollRepository.save(poll);
-		
-		return "Saved";
+
+		Poll savedPoll = pollRepository.save(poll);
+
+		return savedPoll.getId() + "";
 	}
 
 	private void saveEntryPoll(int idEntryPoll, int index, Poll poll) {
@@ -92,7 +92,7 @@ public class MyPollProjectController {
 			break;
 		case 9:
 			poll.setId_poll_entry10(idEntryPoll);
-			break;			
+			break;
 		}
 
 	}
