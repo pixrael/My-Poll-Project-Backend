@@ -1,5 +1,8 @@
 package com.famicom.mypollproject;
 
+import javax.persistence.EntityManager;
+
+import org.hibernate.Session;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -35,30 +38,51 @@ public class MyPollProjectController {
 																// Requests
 	public @ResponseBody String addNewPoll(@RequestBody String createdPoll) throws Exception {
 		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(createdPoll);
 
-		Poll poll = new Poll();
+		JSONObject json;
+		try {
+			// Block of code to try
+			json = (JSONObject) parser.parse(createdPoll);
 
-		poll.setName((String) json.get("name"));
+			Poll poll = new Poll();
 
-		JSONArray entries = (JSONArray) json.get("entries");
+			poll.setName((String) json.get("name"));
 
-		for (int i = 0; i < entries.size(); i++) {
-			JSONObject entry = (JSONObject) entries.get(i);
-			EntryPoll entryPoll = new EntryPoll();
-			entryPoll.setImgurl((String) entry.get("imgurl"));
-			entryPoll.setTitle((String) entry.get("title"));
-			entryPoll.setAuthor((String) entry.get("author"));
-			entryPoll.setCreationDate((String) entry.get("creationDate"));
+			JSONArray entries = (JSONArray) json.get("entries");
 
-			EntryPoll savedEntryPoll = this.entryPollRepository.save(entryPoll);
+			for (int i = 0; i < entries.size(); i++) {
+				JSONObject entry = (JSONObject) entries.get(i);
+				EntryPoll entryPoll = new EntryPoll();
+				entryPoll.setImgurl((String) entry.get("imgurl"));
+				entryPoll.setTitle((String) entry.get("title"));
+				entryPoll.setAuthor((String) entry.get("author"));
+				entryPoll.setCreationDate((String) entry.get("creationDate"));
 
-			this.saveEntryPoll(savedEntryPoll.getId(), i, poll);
+				EntryPoll savedEntryPoll = this.entryPollRepository.save(entryPoll);
+
+				this.saveEntryPoll(savedEntryPoll.getId(), i, poll);
+			}
+
+			Poll savedPoll = pollRepository.save(poll);
+
+			JSONObject responseJson = new JSONObject();
+
+			responseJson.put("status", "ok");
+			responseJson.put("savedId", savedPoll.getId());
+
+			return responseJson.toString();
+
+		} catch (Exception e) {
+
+			JSONObject responseJson = new JSONObject();
+
+			responseJson.put("status", "error");
+			responseJson.put("rootError", e);
+			responseJson.put("description", "Please verify that the json format is correct");
+
+			return responseJson.toString();
 		}
 
-		Poll savedPoll = pollRepository.save(poll);
-
-		return savedPoll.getId() + "";
 	}
 
 	private void saveEntryPoll(int idEntryPoll, int index, Poll poll) {
