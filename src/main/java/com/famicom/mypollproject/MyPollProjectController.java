@@ -46,31 +46,60 @@ public class MyPollProjectController {
 
 			Poll poll = new Poll();
 
-			poll.setName((String) json.get("name"));
+			String pollName = (String) json.get("name");
 
-			JSONArray entries = (JSONArray) json.get("entries");
+			if (pollName.matches("^[a-zA-Z][a-zA-Z0-9_ ]{4,39}$")) {
+				poll.setName(pollName);
 
-			for (int i = 0; i < entries.size(); i++) {
-				JSONObject entry = (JSONObject) entries.get(i);
-				EntryPoll entryPoll = new EntryPoll();
-				entryPoll.setImgurl((String) entry.get("imgurl"));
-				entryPoll.setTitle((String) entry.get("title"));
-				entryPoll.setAuthor((String) entry.get("author"));
-				entryPoll.setCreationDate((String) entry.get("creationDate"));
+				JSONArray entries = (JSONArray) json.get("entries");
 
-				EntryPoll savedEntryPoll = this.entryPollRepository.save(entryPoll);
+				if (entries.size() < 2 || entries.size() > 4) {
 
-				this.saveEntryPoll(savedEntryPoll.getId(), i, poll);
+					JSONObject responseJson = new JSONObject();
+
+					responseJson.put("status", "error");
+					responseJson.put("rootError", "Incorrect numnber of poll entries.");
+					responseJson.put("description", "Number of entry polls should be between 2 to 4 entries.");
+
+					return responseJson.toString();
+
+				} else {
+
+					for (int i = 0; i < entries.size(); i++) {
+						JSONObject entry = (JSONObject) entries.get(i);
+						EntryPoll entryPoll = new EntryPoll();
+						entryPoll.setImgurl((String) entry.get("imgurl"));
+						entryPoll.setTitle((String) entry.get("title"));
+						entryPoll.setAuthor((String) entry.get("author"));
+						entryPoll.setCreationDate((String) entry.get("creationDate"));
+
+						EntryPoll savedEntryPoll = this.entryPollRepository.save(entryPoll);
+
+						this.saveEntryPoll(savedEntryPoll.getId(), i, poll);
+					}
+
+					Poll savedPoll = pollRepository.save(poll);
+
+					JSONObject responseJson = new JSONObject();
+
+					responseJson.put("status", "ok");
+					responseJson.put("savedId", savedPoll.getId());
+
+					return responseJson.toString();
+
+				}
+
+			} else {
+
+				JSONObject responseJson = new JSONObject();
+
+				responseJson.put("status", "error");
+				responseJson.put("rootError", "Incorrect poll name");
+				responseJson.put("description",
+						"Please verify that the name of the poll. Can start only with letters. Numbers can be added from the second character ahead. White spaces are allowed. Min length 5. Max length 40.");
+
+				return responseJson.toString();
 			}
-
-			Poll savedPoll = pollRepository.save(poll);
-
-			JSONObject responseJson = new JSONObject();
-
-			responseJson.put("status", "ok");
-			responseJson.put("savedId", savedPoll.getId());
-
-			return responseJson.toString();
 
 		} catch (Exception e) {
 
