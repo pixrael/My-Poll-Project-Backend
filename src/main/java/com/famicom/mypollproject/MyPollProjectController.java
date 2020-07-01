@@ -18,6 +18,7 @@ import com.famicom.mypollproject.accessingdatamysql.EntryPoll;
 import com.famicom.mypollproject.accessingdatamysql.EntryPollRepository;
 import com.famicom.mypollproject.accessingdatamysql.Poll;
 import com.famicom.mypollproject.accessingdatamysql.PollRepository;
+import com.famicom.mypollproject.utils.PollValidator;
 
 @RestController
 public class MyPollProjectController {
@@ -37,6 +38,9 @@ public class MyPollProjectController {
 	@PostMapping(path = "/createPoll", consumes = "text/plain") // Map ONLY POST
 																// Requests
 	public @ResponseBody String addNewPoll(@RequestBody String createdPoll) throws Exception {
+
+		PollValidator pollValidator = new PollValidator();
+
 		JSONParser parser = new JSONParser();
 
 		JSONObject json;
@@ -44,74 +48,61 @@ public class MyPollProjectController {
 			// Block of code to try
 			json = (JSONObject) parser.parse(createdPoll);
 
-			Poll poll = new Poll();
-
 			String pollName = (String) json.get("name");
 
-			if (pollName.matches("^[a-zA-Z][a-zA-Z0-9_ ]{4,39}$")) {
-				poll.setName(pollName);
+			if (pollValidator.validatePollName(pollName)) {
 
 				JSONArray entries = (JSONArray) json.get("entries");
 
-				if (entries.size() < 2 || entries.size() > 4) {
+				if (pollValidator.validatePollEntries(entries)) {
 
-					JSONObject responseJson = new JSONObject();
+					String response = pollValidator.getErrorIncorrectNumberOfPollEntriesJsonResponse();
 
-					responseJson.put("status", "error");
-					responseJson.put("rootError", "Incorrect numnber of poll entries.");
-					responseJson.put("description", "Number of entry polls should be between 2 to 4 entries.");
-
-					return responseJson.toString();
+					return response;
 
 				} else {
 
-					for (int i = 0; i < entries.size(); i++) {
-						JSONObject entry = (JSONObject) entries.get(i);
-						EntryPoll entryPoll = new EntryPoll();
-						entryPoll.setImgurl((String) entry.get("imgurl"));
-						entryPoll.setTitle((String) entry.get("title"));
-						entryPoll.setAuthor((String) entry.get("author"));
-						entryPoll.setCreationDate((String) entry.get("creationDate"));
-
-						EntryPoll savedEntryPoll = this.entryPollRepository.save(entryPoll);
-
-						this.saveEntryPoll(savedEntryPoll.getId(), i, poll);
-					}
+					Poll poll = this.createPollFromJson(pollName, entries);
 
 					Poll savedPoll = pollRepository.save(poll);
 
-					JSONObject responseJson = new JSONObject();
-
-					responseJson.put("status", "ok");
-					responseJson.put("savedId", savedPoll.getId());
-
-					return responseJson.toString();
+					String response = pollValidator.getOkSavedPollJsonResponse(savedPoll.getId());
+					return response;
 
 				}
 
 			} else {
 
-				JSONObject responseJson = new JSONObject();
-
-				responseJson.put("status", "error");
-				responseJson.put("rootError", "Incorrect poll name");
-				responseJson.put("description",
-						"Please verify that the name of the poll. Can start only with letters. Numbers can be added from the second character ahead. White spaces are allowed. Min length 5. Max length 40.");
-
-				return responseJson.toString();
+				String response = pollValidator.getErrorIncorrectPollNameJsonResponse();
+				return response;
 			}
 
 		} catch (Exception e) {
 
-			JSONObject responseJson = new JSONObject();
-
-			responseJson.put("status", "error");
-			responseJson.put("rootError", e);
-			responseJson.put("description", "Please verify that the json format is correct");
-
-			return responseJson.toString();
+			String response = pollValidator.getErrorInvalidJsonResponse(e);
+			return response;
 		}
 
+	}
+
+	private Poll createPollFromJson(String pollName, JSONArray entries) {
+		Poll poll = new Poll();
+		poll.setName(pollName);
+
+		for (int i = 0; i < entries.size(); i++) {
+			JSONObject entry = (JSONObject) entries.get(i);
+			EntryPoll entryPoll = new EntryPoll();
+			entryPoll.setImgurl((String) entry.get("imgurl"));
+			entryPoll.setTitle((String) entry.get("title"));
+			entryPoll.setAuthor((String) entry.get("author"));
+			entryPoll.setCreationDate((String) entry.get("creationDate"));
+
+			EntryPoll savedEntryPoll = this.entryPollRepository.save(entryPoll);
+
+			this.saveEntryPoll(savedEntryPoll.getId(), i, poll);
+		}
+
+		return poll;
 	}
 
 	private void saveEntryPoll(int idEntryPoll, int index, Poll poll) {
