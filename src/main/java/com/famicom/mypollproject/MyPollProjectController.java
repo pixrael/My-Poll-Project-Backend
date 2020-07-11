@@ -42,6 +42,7 @@ public class MyPollProjectController {
 	@PostMapping(path = "/tryLogin", consumes = "text/plain")
 	public @ResponseBody String tryLoginNewPoll(@RequestBody String loginData) throws Exception {
 
+		PollValidator pollValidator = new PollValidator();
 		JSONParser parser = new JSONParser();
 		JSONObject json;
 
@@ -66,8 +67,7 @@ public class MyPollProjectController {
 				}
 
 			}
-
-			PollValidator pollValidator = new PollValidator();
+		
 
 			if (foundUser != null) {
 				String response = pollValidator.getLoggedUser(foundUser);
@@ -79,7 +79,8 @@ public class MyPollProjectController {
 
 		} catch (Exception e) {
 
-			return "";
+			String response = pollValidator.getErrorInvalidJsonResponse(e);
+			return response;
 		}
 	}
 
