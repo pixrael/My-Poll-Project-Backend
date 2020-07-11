@@ -3,6 +3,8 @@ package com.famicom.mypollproject.utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.famicom.mypollproject.accessingdatamysql.User;
+
 public class PollValidator {
 
 	public String getErrorInvalidJsonResponse(Exception e) {
@@ -33,12 +35,12 @@ public class PollValidator {
 	public boolean validatePollName(String pollName) {
 		return pollName.matches("^[a-zA-Z][a-zA-Z0-9_ ]{4,39}$");
 	}
-	
+
 	public boolean validatePollEntries(JSONArray entries) {
 		return entries.size() < 2 || entries.size() > 4;
 	}
-	
-	public String getErrorIncorrectNumberOfPollEntriesJsonResponse(){
+
+	public String getErrorIncorrectNumberOfPollEntriesJsonResponse() {
 		JSONObject responseJson = new JSONObject();
 
 		responseJson.put("status", "error");
@@ -47,12 +49,37 @@ public class PollValidator {
 
 		return responseJson.toString();
 	}
-	
-	public String getOkSavedPollJsonResponse( Integer id ){
+
+	public String getOkSavedPollJsonResponse(Integer id) {
 		JSONObject responseJson = new JSONObject();
-		
+
 		responseJson.put("status", "ok");
 		responseJson.put("savedId", id + "");
+
+		return responseJson.toString();
+	}
+
+	public String getLoggedUser(User user) {
+
+		JSONObject userJson = new JSONObject();
+
+		userJson.put("id", user.getId());
+		userJson.put("name", user.getName());
+		userJson.put("lastname", user.getLastname());
+		userJson.put("login", user.getLogin());
+		userJson.put("password", user.getPassword());
+
+		return userJson.toString();
+
+	}
+
+	public String getInvalidUserResponse() {
+
+		JSONObject responseJson = new JSONObject();
+
+		responseJson.put("status", "error");
+		responseJson.put("rootError", "Invalid login or password.");
+		responseJson.put("description", "Login and password are invalid.");
 
 		return responseJson.toString();
 	}
