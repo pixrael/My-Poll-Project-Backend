@@ -59,15 +59,20 @@ public class PollValidator {
 		return responseJson.toString();
 	}
 
-	public String getLoggedUser(User user) {
-
+	public String getLoggedUser(User user) {		
+		
+		JSONObject userDataJson = new JSONObject();
+		userDataJson.put("id", user.getId());
+		userDataJson.put("name", user.getName());
+		userDataJson.put("lastname", user.getLastname());
+		userDataJson.put("login", user.getLogin());
+		userDataJson.put("password", user.getPassword());
+		
 		JSONObject userJson = new JSONObject();
-
-		userJson.put("id", user.getId());
-		userJson.put("name", user.getName());
-		userJson.put("lastname", user.getLastname());
-		userJson.put("login", user.getLogin());
-		userJson.put("password", user.getPassword());
+		userJson.put("status", "success");
+		userJson.put("loggedUser", "true");
+		userJson.put("userData", userDataJson);
+		
 
 		return userJson.toString();
 
@@ -77,9 +82,9 @@ public class PollValidator {
 
 		JSONObject responseJson = new JSONObject();
 
-		responseJson.put("status", "error");
-		responseJson.put("rootError", "Invalid login or password.");
-		responseJson.put("description", "Login and password are invalid.");
+		responseJson.put("status", "success");
+		responseJson.put("loggedUser", "false");		
+		responseJson.put("description", "Login or password invalid");
 
 		return responseJson.toString();
 	}

@@ -6,6 +6,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,9 +40,10 @@ public class MyPollProjectController {
 		return pollRepository.findAll();
 	}
 
+	@CrossOrigin(origins = "http://localhost:4200")
 	@PostMapping(path = "/tryLogin", consumes = "text/plain")
 	public @ResponseBody String tryLoginNewPoll(@RequestBody String loginData) throws Exception {
-
+		
 		PollValidator pollValidator = new PollValidator();
 		JSONParser parser = new JSONParser();
 		JSONObject json;
