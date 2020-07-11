@@ -40,10 +40,10 @@ public class MyPollProjectController {
 		return pollRepository.findAll();
 	}
 
-	@CrossOrigin(origins = "http://localhost:4200")
+	@CrossOrigin(origins =  "*")
 	@PostMapping(path = "/tryLogin", consumes = "text/plain")
 	public @ResponseBody String tryLoginNewPoll(@RequestBody String loginData) throws Exception {
-		
+
 		PollValidator pollValidator = new PollValidator();
 		JSONParser parser = new JSONParser();
 		JSONObject json;
@@ -69,7 +69,6 @@ public class MyPollProjectController {
 				}
 
 			}
-		
 
 			if (foundUser != null) {
 				String response = pollValidator.getLoggedUser(foundUser);
