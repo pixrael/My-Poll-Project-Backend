@@ -2,15 +2,11 @@ package com.famicom.mypollproject;
 
 import java.util.List;
 
-import javax.persistence.EntityManager;
-
-import org.hibernate.SessionFactory;
-import org.hibernate.query.Query;
-import org.hibernate.Session;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +18,8 @@ import com.famicom.mypollproject.accessingdatamysql.EntryPoll;
 import com.famicom.mypollproject.accessingdatamysql.EntryPollRepository;
 import com.famicom.mypollproject.accessingdatamysql.Poll;
 import com.famicom.mypollproject.accessingdatamysql.PollRepository;
+import com.famicom.mypollproject.accessingdatamysql.User;
+import com.famicom.mypollproject.accessingdatamysql.UserRepository;
 import com.famicom.mypollproject.utils.PollValidator;
 
 @RestController
@@ -31,10 +29,10 @@ public class MyPollProjectController {
 	private PollRepository pollRepository;
 
 	@Autowired // This means to get the bean called userRepository
-	private EntryPollRepository entryPollRepository;
+	private UserRepository userRepository;
 
-	@Autowired
-	private SessionFactory sessionFactory;
+	@Autowired // This means to get the bean called userRepository
+	private EntryPollRepository entryPollRepository;
 
 	@GetMapping(path = "/getAllPolls")
 	public @ResponseBody Iterable<Poll> getAllPolls() {
@@ -42,47 +40,49 @@ public class MyPollProjectController {
 		return pollRepository.findAll();
 	}
 
+	@CrossOrigin(origins =  "*")
 	@PostMapping(path = "/tryLogin", consumes = "text/plain")
 	public @ResponseBody String tryLoginNewPoll(@RequestBody String loginData) throws Exception {
 
-		/*
-		 * { "login":"admin@gmail.com" "password":"1234" }
-		 * 
-		 */
-		Session session = null;
+		PollValidator pollValidator = new PollValidator();
 		JSONParser parser = new JSONParser();
 		JSONObject json;
 
 		try {
-			session = sessionFactory.openSession();
 
-			Query q = session.createQuery("Select * from user");
+			json = (JSONObject) parser.parse(loginData);
 
-			List list = q.list();
+			String login = (String) json.get("login");
+			String password = (String) json.get("password");
 
-			for (int i = 0; i < list.size(); i++) {
-				System.out.println("list result");
-				System.out.println(list.get(i));
+			List<User> users = (List<User>) this.userRepository.findAll();
+
+			User foundUser = null;
+			for (int i = 0; i < users.size(); i++) {
+
+				boolean loginEqual = login.equals(users.get(i).getLogin());
+				boolean passwordEqual = password.equals(users.get(i).getPassword());
+
+				if (loginEqual && passwordEqual) {
+					foundUser = users.get(i);
+					i = users.size();
+				}
+
 			}
 
-			// Block of code to try
-//			json = (JSONObject) parser.parse(loginData);
-//
-//			String login = (String) json.get("login");
-//			String password = (String) json.get("password");
-			return "test res";
+			if (foundUser != null) {
+				String response = pollValidator.getLoggedUser(foundUser);
+				return response;
+			}
+
+			String response = pollValidator.getInvalidUserResponse();
+			return response;
 
 		} catch (Exception e) {
 
-			return "";
+			String response = pollValidator.getErrorInvalidJsonResponse(e);
+			return response;
 		}
-
-		// verify if exist that user with that login and password
-
-		// if exist should generate a token and return it
-
-		// if !exist should return the response with no exist
-		
 	}
 
 	@PostMapping(path = "/createPoll", consumes = "text/plain")
